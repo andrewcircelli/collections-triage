@@ -1,0 +1,9 @@
+[
+  {"id": "R1", "status": "Handled", "reason": "Promise to pay logged for Oct 30"},
+  {"id": "R2", "status": "Handled", "reason": "Request a new PO from Birch LLC; pause reminders on INV-1004"},
+  {"id": "R3", "status": "Needs a person", "reason": "No invoice INV-1007 on Cedar Inc's account. Their open invoice is INV-1006."},
+  {"id": "R4", "status": "Needs a person", "reason": "Disputes always go to a person"},
+  {"id": "R5", "status": "Handled", "reason": "Payment logged as sent (ACH-88213); pause reminders on INV-1002 until it arrives"},
+  {"id": "R6", "status": "Needs a person", "reason": "Customer says they paid $1,500.00, but INV-1008 is for $1,950.00"},
+  {"id": "R7", "status": "Needs a person", "reason": "No clear request in the reply"}
+]

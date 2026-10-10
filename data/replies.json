@@ -1,0 +1,44 @@
+[
+  {
+    "id": "R1",
+    "from": "Acme Corp",
+    "received": "2026-10-05",
+    "email": "Hi, thanks for the reminder on INV-1001. Our payment run for this one is scheduled, and you should have the full amount by October 30. Sorry for the delay."
+  },
+  {
+    "id": "R2",
+    "from": "Birch LLC",
+    "received": "2026-10-05",
+    "email": "Hello, we can't release payment on INV-1004 yet. Our PO for your services expired at the end of June, so AP rejected the invoice. Can you have someone send us a new PO request? Once that's approved we'll pay."
+  },
+  {
+    "id": "R3",
+    "from": "Cedar Inc",
+    "received": "2026-10-05",
+    "email": "This was paid already. We mailed check #4471 for INV-1007 on September 24. Please check your records and stop the reminders."
+  },
+  {
+    "id": "R4",
+    "from": "Delta Co",
+    "received": "2026-10-06",
+    "email": "We're holding INV-1009. Line 3 bills an on-site training session that never happened; it was cancelled in July. Please send a corrected invoice and we'll pay the rest."
+  },
+  {
+    "id": "R5",
+    "from": "Acme Corp",
+    "received": "2026-10-06",
+    "email": "Quick note: INV-1002 for $2,150 went out by ACH yesterday, reference ACH-88213. Should land in a day or two."
+  },
+  {
+    "id": "R6",
+    "from": "Delta Co",
+    "received": "2026-10-06",
+    "email": "Re: INV-1008. We paid $1,500 on this last week by check #2290, which is what we have approved. Let me know if you need anything else."
+  },
+  {
+    "id": "R7",
+    "from": "Birch LLC",
+    "received": "2026-10-06",
+    "email": "This is the third one of these this month. I've forwarded it on. Please take me off these emails."
+  }
+]

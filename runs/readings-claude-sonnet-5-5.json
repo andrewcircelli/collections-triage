@@ -1,0 +1,121 @@
+[
+  {
+    "id": "R1",
+    "from": "Acme Corp",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "will_pay",
+      "summary": "Will pay INV-1001 in full by Oct 30",
+      "invoice_number": "INV-1001",
+      "amount": null,
+      "promised_date": "2026-10-30",
+      "document_needed": null,
+      "reference": null
+    },
+    "input_tokens": 1214,
+    "output_tokens": 81,
+    "cost": 0.003238
+  },
+  {
+    "id": "R2",
+    "from": "Birch LLC",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "needs_document",
+      "summary": "Cannot pay INV-1004 until a new PO is provided; prior PO expired end of June",
+      "invoice_number": "INV-1004",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": "new PO",
+      "reference": null
+    },
+    "input_tokens": 1231,
+    "output_tokens": 90,
+    "cost": 0.003362
+  },
+  {
+    "id": "R3",
+    "from": "Cedar Inc",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "paid",
+      "summary": "Says INV-1007 was already paid by check #4471 mailed September 24",
+      "invoice_number": "INV-1007",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": null,
+      "reference": "#4471"
+    },
+    "input_tokens": 1200,
+    "output_tokens": 84,
+    "cost": 0.00324
+  },
+  {
+    "id": "R4",
+    "from": "Delta Co",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "dispute",
+      "summary": "Disputes line 3 of INV-1009 (cancelled training) and asks for a corrected invoice",
+      "invoice_number": "INV-1009",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": "corrected invoice",
+      "reference": null
+    },
+    "input_tokens": 1215,
+    "output_tokens": 204,
+    "cost": 0.00447
+  },
+  {
+    "id": "R5",
+    "from": "Acme Corp",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "paid",
+      "summary": "Says INV-1002 for $2,150 was paid by ACH on 2026-10-05, reference ACH-88213",
+      "invoice_number": "INV-1002",
+      "amount": 2150.0,
+      "promised_date": null,
+      "document_needed": null,
+      "reference": "ACH-88213"
+    },
+    "input_tokens": 1205,
+    "output_tokens": 102,
+    "cost": 0.00343
+  },
+  {
+    "id": "R6",
+    "from": "Delta Co",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "paid",
+      "summary": "Says INV-1008 was paid $1,500 by check #2290 last week",
+      "invoice_number": "INV-1008",
+      "amount": 1500.0,
+      "promised_date": null,
+      "document_needed": null,
+      "reference": "#2290"
+    },
+    "input_tokens": 1204,
+    "output_tokens": 85,
+    "cost": 0.003258
+  },
+  {
+    "id": "R7",
+    "from": "Birch LLC",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "unclear",
+      "summary": "Customer says they forwarded the reminder and asks to be removed from these emails",
+      "invoice_number": null,
+      "amount": null,
+      "promised_date": null,
+      "document_needed": null,
+      "reference": null
+    },
+    "input_tokens": 1187,
+    "output_tokens": 77,
+    "cost": 0.003144
+  }
+]
