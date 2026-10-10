@@ -9,6 +9,7 @@ and shows the same thing every time.
 Run:  streamlit run app.py
 """
 
+import html
 import json
 from datetime import date
 from pathlib import Path
@@ -67,6 +68,17 @@ def show(value) -> str:
         return f"{d.strftime('%b')} {d.day}"
     except ValueError:
         return value
+
+
+def large(text: str, highlight: bool = False) -> None:
+    """Show a line in larger text, for the parts that must be readable over a screen share.
+    Streamlit has no font-size setting for ordinary text, so this wraps the line in an
+    HTML <div>. It is the only HTML on the page. Use <b> for bold inside it, and &#36;
+    for a dollar sign."""
+    style = "font-size: 1.15rem; line-height: 1.45; margin-bottom: 0.4rem;"
+    if highlight:
+        style += " background: rgba(250, 202, 21, 0.18); padding: 0.6rem 0.8rem; border-radius: 0.5rem;"
+    st.markdown(f'<div style="{style}">{text}</div>', unsafe_allow_html=True)
 
 
 def cell(before, after) -> str:
@@ -133,7 +145,7 @@ processed_tile.metric("Customer replies processed", f"{processed} of {len(outcom
                       f"{confirmed} of {total_actions} actions confirmed", delta_color="off", delta_arrow="off")
 exceptions_tile.metric("Exceptions routed for review", f"{exceptions}",
                        "each with the reason", delta_color="off", delta_arrow="off")
-cash_tile.metric("Overdue cash handled automatically", f"${cash_handled:,.0f}",
+cash_tile.metric("Overdue receivables actioned", f"${cash_handled:,.0f}",
                  f"of ${cash_overdue:,.0f} overdue", delta_color="off", delta_arrow="off")
 
 st.caption(
@@ -176,19 +188,16 @@ with replies_side:
                     st.markdown(f"⚠️ **Needs a person.** {o['reason']}")
                 if o["read_as"] != expected_intent[o["id"]]:
                     misread = (
-                        f"The model labelled this \"{INTENT_WORDS[o['read_as']]}\" "
-                        f"instead of \"{INTENT_WORDS[expected_intent[o['id']]]}\"."
+                        f"<b>The model misread this</b> as \u201c{INTENT_WORDS[o['read_as']]}\u201d, "
+                        f"not \u201c{INTENT_WORDS[expected_intent[o['id']]]}\u201d."
                     )
                     if o["status"] == "Needs a person" and o["read_as"] == "needs_document":
-                        st.warning(
-                            f"{misread} Taken as a request for a {o['document_read']}, it would have been "
-                            f"handled as routine paperwork. The document rule sent it to a person anyway: "
-                            f"asking for a {o['document_read']} means they disagree with the bill."
-                        )
+                        large(f"{misread} <b>The document rule still sent it to a person:</b> "
+                              f"a {o['document_read']} means they disagree with the bill.", highlight=True)
                     elif o["status"] == "Needs a person":
-                        st.warning(f"{misread} A check still sent it to a person.")
+                        large(f"{misread} <b>A rule still sent it to a person.</b>", highlight=True)
                     else:
-                        st.error(f"{misread} No check caught it.")
+                        st.error("The model misread this, and no rule caught it.")
                 for action in o["actions"]:
                     if verify_action(after, o["id"], action):
                         st.caption(f"✓ Done: {describe(action)}")
@@ -240,9 +249,7 @@ with system_side:
     extra_cost = (mid_eval["cost_per_reply"] - cheap_eval["cost_per_reply"]) * 10_000
 
     with st.container(border=True):
-        st.markdown("**Model evaluation**")
-        st.caption(f"{len(cases)} labelled emails, harder than the 4 above · 5 runs per model · "
-                   f"{cheap_eval['readings']} outcomes each")
+        large(f"<b>Model evaluation</b> · {len(cases)} harder test emails, 5 runs each")
         cheap_col, mid_col = st.columns(2)
         with cheap_col:
             st.metric("Cheaper model", f"{cheap_eval['correct_outcome'] / cheap_eval['readings']:.0%}",
@@ -253,14 +260,13 @@ with system_side:
                       f"{mid_eval['correct_outcome']} of {mid_eval['readings']} correct", delta_color="off", delta_arrow="off")
             st.progress(mid_eval["correct_outcome"] / mid_eval["readings"])
 
-        st.markdown(f"**Example, a disguised dispute** ({example['from']}): *\"{example['email']}\"*")
-        st.markdown(f"✗ **Cheaper model** ({cheap_example_misses} of 5 runs): took it as a promise to pay and "
-                    f"missed the discount dispute. The rules allowed routine handling.")
-        st.markdown(f"✓ **Mid-tier model** ({5 - mid_example_misses} of 5 runs): recognised the dispute "
-                    f"and sent it to a person.")
+        large(f"<b>Example:</b> \u201c{html.escape(example['email'])}\u201d")
+        large(f"\u2717 <b>Cheaper model</b>, {cheap_example_misses} of 5 runs: read a promise to pay, "
+              f"missed the dispute \u2192 handled as routine")
+        large(f"\u2713 <b>Mid-tier model</b>, {5 - mid_example_misses} of 5 runs: caught the dispute "
+              f"\u2192 sent to a person")
         st.caption(
             f"Missed escalations: {cheap_eval['false_handled']} vs {mid_eval['false_handled']} of "
-            f"{cheap_eval['readings']} test runs, concentrated in disguised disputes. "
-            f"Mid-tier costs about \\${extra_cost:,.0f} more per 10,000 emails. "
-            f"Test results, not a real-world rate."
+            f"{cheap_eval['readings']} test runs, concentrated in disguised disputes · "
+            f"mid-tier about \\${extra_cost:,.0f} more per 10,000 emails"
         )

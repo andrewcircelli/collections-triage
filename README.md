@@ -195,8 +195,7 @@ For a demo, only `streamlit run app.py` is needed: it reads the saved runs and m
 
 One screen. Across the top, the business results for the run shown: 50% of replies handled without
 a collector (2 of 4), 4 of 4 customer replies processed (every action confirmed in the AR system),
-2 exceptions routed for review with the reason, and $8,400 of the $21,050 overdue handled
-automatically. These come from 4 made-up replies, so they show how it works, not a forecast; the
+2 exceptions routed for review with the reason, and $8,400 of the $21,050 overdue in receivables actioned (invoices with a handled reply, not cash collected). These come from 4 made-up replies, so they show how it works, not a forecast; the
 screen says so. Below that, on the left, each customer's email beside its outcome, the reason, and the actions done,
 each with a ✓ checked against the AR system. Cedar's caught wrong invoice comes first. Where the
 model misread an email, the row says so. On the right, the AR system after the run: what changed is
