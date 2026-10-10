@@ -4,7 +4,8 @@ When an invoice goes overdue, customers reply with all sorts of things: we paid,
 we need a new PO, this line is wrong. This reads each reply, checks what the customer said against
 the actual invoices, handles the routine ones, and sends the rest to a person with the reason.
 
-**Status: work in progress.** Built on made-up customers and invoices. Nothing is ever sent.
+Built on made-up customers and invoices. Nothing is ever sent: "Handled" means the next step is
+written out for a person to confirm.
 
 ## How it works
 
@@ -22,7 +23,7 @@ Reply → 1. READ           → 2. FIND            → 3. CHECK             → 
 | 2. Find | Plain code (`triage.py`) | ✅ Built |
 | 3. Check | Plain code, no model (`triage.py`) | ✅ Built |
 | 4. Route | Plain code, two outcomes (`triage.py`) | ✅ Built |
-| The one-screen table | Streamlit | ⏳ Not built yet |
+| The one screen | Streamlit (`app.py`) | ✅ Built |
 
 The model never checks its own work. It doesn't see the invoice list at all.
 
@@ -56,9 +57,20 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # then fill in the two keys
-python read.py
-python triage.py
+python read.py        # calls the model; costs about 3 cents for both models
+python triage.py      # plain code, free
+streamlit run app.py  # opens the screen in the browser
 ```
+
+For a demo, only the last command is needed: `app.py` reads the saved run in `runs/` and makes no
+model calls.
+
+## The screen
+
+One row per reply: the customer's own email on the left, the decision and reason on the right. The
+Cedar reply (the caught wrong invoice) comes first. The summary line reads "3 of 7 handled · 4 need
+a person · $10,550 of overdue cash has a next step today". A switch at the top shows the same
+replies read by the cheaper or the mid-tier model, with the cost of each.
 
 `read.py` reads every reply with two models, a cheap one (`claude-haiku-4-5`) and a mid-tier one
 (`claude-sonnet-5-5`), and writes `runs/readings-<model>.json`. Each call is traced in LangSmith
