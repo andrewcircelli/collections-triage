@@ -96,22 +96,47 @@ summary = json.loads(SUMMARY_PATH.read_text())
 before = fresh_ar_system(json.loads(INVOICES_PATH.read_text()))
 after = load(RUNS_DIR / f"ar-system-{model}.json")
 
+# The business results. A reply counts as processed when it got an outcome
+# and every action for it is confirmed in the AR system.
 handled = 0
+processed = 0
 total_actions = 0
 confirmed = 0
+cash_handled = 0.0
+cash_overdue = 0.0
 for o in outcomes:
-    if o["status"] == "Handled":
-        handled += 1
+    all_done = True
     for action in o["actions"]:
         total_actions += 1
         if verify_action(after, o["id"], action):
             confirmed += 1
+        else:
+            all_done = False
+    if all_done:
+        processed += 1
+    if o["status"] == "Handled":
+        handled += 1
+        cash_handled += o["amount_due"]
 
-st.markdown(
-    f"**{handled} of {len(outcomes)} handled · {len(outcomes) - handled} need a person · "
-    f"{confirmed} of {total_actions} actions confirmed in the AR system** · "
-    f"cost per reply: \\${cost_per_reply('claude-haiku-4-5'):.4f} cheaper model, "
-    f"\\${cost_per_reply('claude-sonnet-5-5'):.4f} mid-tier"
+for inv in json.loads(INVOICES_PATH.read_text()):
+    cash_overdue += inv["amount"]
+
+exceptions = len(outcomes) - handled
+
+handled_tile, processed_tile, exceptions_tile, cash_tile = st.columns(4)
+handled_tile.metric("Handled without a collector", f"{handled / len(outcomes):.0%}",
+                    f"{handled} of {len(outcomes)} replies", delta_color="off")
+processed_tile.metric("Customer replies processed", f"{processed} of {len(outcomes)}",
+                      f"{confirmed} of {total_actions} actions confirmed", delta_color="off")
+exceptions_tile.metric("Exceptions routed for review", f"{exceptions}",
+                       "each with the reason", delta_color="off")
+cash_tile.metric("Overdue cash handled automatically", f"${cash_handled:,.0f}",
+                 f"of ${cash_overdue:,.0f} overdue", delta_color="off")
+
+st.caption(
+    f"On 4 made-up replies, so these show how it works, not a forecast; a pilot measures the real rates. "
+    f"Cost per reply: \\${cost_per_reply('claude-haiku-4-5'):.4f} cheaper model, "
+    f"\\${cost_per_reply('claude-sonnet-5-5'):.4f} mid-tier."
 )
 
 # The repeat test, in plain words: which run is on screen, and the totals over all 5.
