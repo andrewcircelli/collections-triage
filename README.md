@@ -12,8 +12,9 @@ then checked there. Nothing goes to customers: emails are saved as drafts.
 - **Capability:** the model turns free-text replies into structured facts.
 - **Control:** written business rules, not the model, decide every outcome and authorize every
   action.
-- **Evidence:** in the tested cases, the cheaper model's facts were enough for the checks to reach
-  the expected outcome every time, including the run where it misread a dispute.
+- **Evidence:** on the 4 demo replies, both models' facts were enough for the checks to reach the
+  expected outcome every time. On 30 harder cases, only the mid-tier model's were: the cheaper one
+  handled 1 in 10 replies as routine that should have gone to a person, all of them disputes (see "The evaluation set").
 
 It does **not** show that the system is safe in general. The checks only catch a model error when
 the invoice records give independent evidence of it. Some errors they can't see (see
@@ -120,6 +121,37 @@ A model can read the same email differently from run to run, so `repeat.py` read
 
 That is 4 emails and 5 runs: enough to show how it behaves, not to rate a model in general.
 
+## The evaluation set: 30 harder cases
+
+The 4 demo replies show how it works; they can't show how far it can be trusted. `eval_cases.py`
+runs both models on 30 cases (`eval/cases.json`, expected outcomes reviewed by Andrew), 5 times
+each: 150 readings per model, the full pipeline every time. A third of the cases are aimed at the
+known gap (disputes worded as promises, deductions, two invoices with the same amount). Results are
+in LangSmith (dataset `collections-triage-eval`, one experiment per model) and `eval/results.json`.
+
+| | Cheaper (`claude-haiku-4-5`) | Mid-tier (`claude-sonnet-5-5`) |
+|---|---|---|
+| Correct outcome | 135 of 150 | **150 of 150** |
+| **False Handled** (should have gone to a person) | **15 of 150**, about 3 in every 30 replies | **0 of 150** |
+| False escalation (sent to a person needlessly) | 0 | 0 |
+| Cost per reply | about $0.0013 | about $0.0037 |
+
+**Every false Handled was the known gap.** The cheaper model read a dispute as a promise to pay
+("will pay by Oct 30, but apply the 10% your rep promised"; "less the onboarding charge"; "as soon
+as you fix the training charge") or as a document request ("send a new PO form; also, line 1 is
+priced above contract"). The invoice and the date were real, so every rule passed. The mid-tier
+model read all four as disputes, every time.
+
+**What it means:** on the 4 demo emails the two models looked equal. On harder cases the cheaper
+one handled 1 in 10 replies as routine that should have gone to a person, every one a dispute. The mid-tier model costs about $24 more per
+10,000 replies; one disputed invoice marked Handled (these were $950 to $7,450) costs more than
+that in collector time and customer trust. So the reading step should use the mid-tier model.
+
+**What it doesn't mean:** 0 of 150 is not "never". The 5 runs repeat the same 30 emails, so they
+aren't independent; with 30 distinct cases, a rough upper bound on the mid-tier model's miss rate
+is about 1 in 10 (the rule of three: 3 ÷ 30). More, and real, cases would narrow it. That is what
+the pilot's side-by-side period is for.
+
 ## Run it
 
 ```
@@ -130,6 +162,7 @@ cp .env.example .env        # then fill in the two keys
 
 python repeat.py            # reads the 4 emails 5 times per model (40 calls, about 10 cents) and scores them
 python test_checks.py       # tests the checks, no model calls
+python eval_cases.py        # the 30-case evaluation (300 calls, under a dollar), results to LangSmith
 ```
 
 To put a run on the screen, copy it into place, then run the checks and actions on it:

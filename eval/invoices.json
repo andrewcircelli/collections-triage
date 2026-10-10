@@ -1,0 +1,12 @@
+[
+  {"invoice": "INV-2001", "customer": "Acme Corp",    "amount": 4800.00,  "due_date": "2026-09-15"},
+  {"invoice": "INV-2002", "customer": "Birch LLC",    "amount": 3600.00,  "due_date": "2026-09-10"},
+  {"invoice": "INV-2003", "customer": "Cedar Inc",    "amount": 5200.00,  "due_date": "2026-09-01"},
+  {"invoice": "INV-2004", "customer": "Delta Co",     "amount": 7450.00,  "due_date": "2026-08-22"},
+  {"invoice": "INV-2005", "customer": "Elm Systems",  "amount": 12000.00, "due_date": "2026-09-05"},
+  {"invoice": "INV-2006", "customer": "Elm Systems",  "amount": 2400.00,  "due_date": "2026-09-20"},
+  {"invoice": "INV-2007", "customer": "Fir Health",   "amount": 18500.00, "due_date": "2026-08-30"},
+  {"invoice": "INV-2008", "customer": "Grove Media",  "amount": 950.00,   "due_date": "2026-09-25"},
+  {"invoice": "INV-2009", "customer": "Harbor Labs",  "amount": 6300.00,  "due_date": "2026-09-01"},
+  {"invoice": "INV-2010", "customer": "Harbor Labs",  "amount": 6300.00,  "due_date": "2026-10-01"}
+]
