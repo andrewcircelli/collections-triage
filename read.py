@@ -62,9 +62,10 @@ class Reading(BaseModel):
     promised_date: str | None = Field(
         description="The date they promise to pay by, as YYYY-MM-DD, or null."
     )
-    document_needed: str | None = Field(
-        description="The document they ask for (e.g. 'new PO', 'W-9', "
-        "'invoice copy', 'corrected invoice'), or null."
+    document_needed: Literal[
+        "new PO", "W-9", "invoice copy", "corrected invoice", "other"
+    ] | None = Field(
+        description="The document they ask for, as one of five choices, or null."
     )
     reference: str | None = Field(
         description="A check number or payment reference they mention, or null."

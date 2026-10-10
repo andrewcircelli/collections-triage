@@ -19,20 +19,35 @@ Reply → 1. READ           → 2. FIND            → 3. CHECK             → 
 | Step | Who does it | Built? |
 |---|---|---|
 | 1. Read | The model (`read.py`) | ✅ Built |
-| 2. Find | Plain code | ⏳ Not built yet |
-| 3. Check | Plain code, no model | ⏳ Not built yet |
-| 4. Route | Plain code, two outcomes | ⏳ Not built yet |
+| 2. Find | Plain code (`triage.py`) | ✅ Built |
+| 3. Check | Plain code, no model (`triage.py`) | ✅ Built |
+| 4. Route | Plain code, two outcomes (`triage.py`) | ✅ Built |
 | The one-screen table | Streamlit | ⏳ Not built yet |
 
 The model never checks its own work. It doesn't see the invoice list at all.
+
+## The checks
+
+A reply is **Handled** only if it's routine and every check passes. Otherwise it **Needs a person**,
+and the first thing that failed is the reason.
+
+1. **Disputes and unclear replies always go to a person.**
+2. **The invoice is on that customer's account.** With no invoice number, the customer must have
+   exactly one open invoice.
+3. **Any amount they mention matches the invoice.**
+4. **A promised payment date** is a real date, not before the email arrived, and within 30 days.
+5. **Only routine documents are routine:** a new PO, a W-9 or an invoice copy. A request for a
+   corrected invoice means they disagree with the bill, so it goes to a person.
+
+"We already paid" counts as routine: the next step logs the payment and pauses reminders until it
+arrives.
 
 ## The data
 
 - `data/invoices.json`: 6 open invoices across 4 customers.
 - `data/replies.json`: 7 short customer replies.
 - `data/expected.json`: the expected status and reason for every reply, written before the pipeline
-  runs. The checks are judged against this file. (Draft: the exact reasons are finalised when the
-  checks are built.)
+  ran. The checks are judged against this file.
 
 ## Run it
 
@@ -42,11 +57,26 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # then fill in the two keys
 python read.py
+python triage.py
 ```
 
 `read.py` reads every reply with two models, a cheap one (`claude-haiku-4-5`) and a mid-tier one
 (`claude-sonnet-5-5`), and writes `runs/readings-<model>.json`. Each call is traced in LangSmith
 (project `collections-triage`) with its tokens and cost.
+
+`triage.py` finds, checks and routes every reading, prints each outcome against `expected.json`, and
+writes `runs/triage-<model>.json`. It makes no model calls, so it's free to rerun.
+
+## Result so far
+
+Both models: **7 of 7 replies match `expected.json`**, status and reason. 3 handled, 4 to a person.
+Reading all 7 replies cost about $0.01 with Haiku and $0.02 with Sonnet 5.5.
+
+- **The caught mistake:** Cedar quoted invoice INV-1007, which isn't theirs. Both models copied it
+  faithfully; the invoice check caught it.
+- **The cheap model's slip:** on one of three runs, Haiku read Delta's dispute as a request for a
+  corrected invoice. The document check (5) sends that to a person too, so the outcome is still
+  right. Sonnet 5.5 called it a dispute every time.
 
 `anthropic` is pinned below 1.0 because LangSmith's `wrap_anthropic` does not yet work with the 1.x
 SDK (it looks for the removed `client.completions`).
