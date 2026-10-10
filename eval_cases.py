@@ -1,4 +1,4 @@
-"""The evaluation set: 30 harder cases, weighted by what a wrong call costs.
+"""The evaluation set: 30 harder cases, with wrong calls counted in dollars.
 
 The 4 demo replies show how it works. These 30 test how far it can be
 trusted (eval/cases.json, approved by Andrew 10/10). A third of them are

@@ -9,6 +9,9 @@ Every model call is traced in LangSmith, with its token counts and cost.
 
 Run:  python read.py
 Writes one file per model to runs/, e.g. runs/readings-claude-haiku-4-5.json
+
+read_reply() is also what repeat.py and eval_cases.py call. The runs on the
+screen come from repeat.py (see the README), not from running this file.
 """
 
 import json

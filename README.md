@@ -14,7 +14,8 @@ then checked there. Nothing goes to customers: emails are saved as drafts.
   action.
 - **Evidence:** on the 4 demo replies, both models' facts were enough for the checks to reach the
   expected outcome every time. On 30 harder cases, only the mid-tier model's were: the cheaper one
-  missed required escalations in 15 of 150 test runs, concentrated in disguised disputes (see "The evaluation set").
+  missed required escalations in 15 of 150 test runs, concentrated in disguised disputes (see "The
+  evaluation set").
 
 It does **not** show that the system is safe in general. The checks only catch a model error when
 the invoice records give independent evidence of it. Some errors they can't see (see
@@ -36,6 +37,9 @@ Reply → 1. READ           → 2. FIND            → 3. CHECK             → 
 | 2. Find, 3. Check, 4. Route | Plain code, no model | `triage.py` |
 | Actions, and the proof they happened | Plain code | `actions.py` |
 | The one screen | Streamlit | `app.py` |
+| Tests of the rules, including the known gap | Plain code | `test_checks.py` |
+| The repeat test: 4 demo emails, 5 runs per model | Model + rules | `repeat.py` |
+| The evaluation: 30 harder emails, 5 runs per model | Model + rules, results in LangSmith | `eval_cases.py` |
 
 The model never checks its own work. It doesn't see the invoice list at all.
 
@@ -111,7 +115,7 @@ A model can read the same email differently from run to run, so `repeat.py` read
 | Emails read as expected | 19 of 20 | 20 of 20 |
 | Expected outcome | **20 of 20** | **20 of 20** |
 | Exact expected reason | 19 of 20 | 20 of 20 |
-| Cost per reply | about $0.0013 | about $0.0034 |
+| Cost per reply | about $0.0013 | about $0.0033 |
 
 - **The caught wrong invoice:** Cedar quoted INV-1007, which isn't theirs. Both models copied it
   faithfully, every time; the invoice check caught it every time.
@@ -143,9 +147,10 @@ priced above contract"). The invoice and the date were real, so every rule passe
 model read all four as disputes, every time.
 
 **What it means:** on the 4 demo emails the two models looked equal. On harder cases the cheaper
-one missed required escalations in 15 of 150 test runs, all of them disguised disputes. The mid-tier model costs about $24 more per
-10,000 replies; one disputed invoice marked Handled (these were $950 to $7,450) costs more than
-that in collector time and customer trust. So the reading step should use the mid-tier model.
+one missed required escalations in 15 of 150 test runs, all of them disguised disputes. The
+mid-tier model costs about $24 more per 10,000 replies; one disputed invoice marked Handled (these
+were $950 to $7,450) costs more than that in collector time and customer trust. So the reading step
+should use the mid-tier model.
 
 **The finding about the rules:** rules protect the workflow only when they get complete, accurate
 facts. If the reading step misses a dispute entirely, the rules can't see what's missing. That's
@@ -154,8 +159,9 @@ decide.
 
 **What it doesn't mean:** 15 of 150 is not a real-world miss rate. The 150 runs are 30 emails
 read 5 times each, not 150 different customers, and the hard cases were deliberately
-over-represented. A real rate needs real replies. Likewise, 0 of 150 is not "never". The 5 runs repeat the same 30 emails, so they
-aren't independent; with 30 distinct cases, a rough upper bound on the mid-tier model's miss rate
+over-represented. A real rate needs real replies. Likewise, 0 of 150 is not "never". The 5 runs
+repeat the same 30 emails, so they aren't independent; with 30 distinct cases, a rough upper bound
+on the mid-tier model's miss rate
 is about 1 in 10 (the rule of three: 3 ÷ 30). More, and real, cases would narrow it. That is what
 the pilot's side-by-side period is for.
 
@@ -195,9 +201,11 @@ For a demo, only `streamlit run app.py` is needed: it reads the saved runs and m
 
 One screen. Across the top, the business results for the run shown: 50% of replies handled without
 a collector (2 of 4), 4 of 4 customer replies processed (every action confirmed in the AR system),
-2 exceptions routed for review with the reason, and $8,400 of the $21,050 overdue in receivables actioned (invoices with a handled reply, not cash collected). These come from 4 made-up replies, so they show how it works, not a forecast; the
-screen says so. Below that, on the left, each customer's email beside its outcome, the reason, and the actions done,
-each with a ✓ checked against the AR system. Cedar's caught wrong invoice comes first. Where the
+2 exceptions routed for review with the reason, and $8,400 of the $21,050 overdue in receivables
+actioned (invoices with a handled reply, not cash collected). These come from 4 made-up replies, so
+they show how it works, not a forecast; the screen says so. Below that, on the left, each
+customer's email beside its outcome, the reason, and the actions done, each with a ✓ checked
+against the AR system. Cedar's caught wrong invoice comes first. Where the
 model misread an email, the row says so. On the right, the AR system after the run: what changed is
 in bold, the old value struck through, plus the collector's queue and the outbox. A switch at the
 top shows the cheaper or the mid-tier model's run. Under the AR system, the model evaluation:

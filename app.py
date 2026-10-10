@@ -1,10 +1,14 @@
-"""The one screen: what the collector sees.
+"""The one screen.
 
-Left: each customer's email beside what happened to it.
-Right: the AR system itself, showing what the run changed.
+Top: the business results for the run shown (handled, processed,
+exceptions, receivables actioned).
+Left: each customer's email beside what happened to it, with each action
+confirmed against the AR system, and a note wherever the model misread.
+Right: the AR system itself, showing what the run changed; under it, the
+model evaluation on 30 harder emails (from eval/results.json).
 
-Reads a saved run (runs/). It makes no model calls, so it opens instantly
-and shows the same thing every time.
+Reads saved runs (runs/ and eval/). It makes no model calls, so it opens
+instantly and shows the same thing every time.
 
 Run:  streamlit run app.py
 """

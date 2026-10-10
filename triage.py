@@ -4,8 +4,8 @@ Takes what the model read from each reply (runs/readings-<model>.json),
 finds the invoice, checks every fact the customer mentioned against the
 invoice records, and gives each reply one of two outcomes:
 
-  Handled         a routine reply where every check passed. The next step
-                  is written out. Nothing is sent.
+  Handled         a routine reply where every check passed. Its actions are
+                  done in the stand-in AR system. Nothing goes to customers.
   Needs a person  anything else, with the reason.
 
 Then it compares every outcome with data/expected.json, which was written
