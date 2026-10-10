@@ -11,6 +11,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from actions import describe, load, verify_action
+
 RUNS_DIR = Path("runs")
 REPLIES_PATH = Path("data/replies.json")
 
@@ -35,13 +37,24 @@ def total_cost(outcomes: list[dict]) -> float:
 
 st.set_page_config(page_title="Collections reply triage", layout="wide")
 st.title("Collections reply triage")
-st.caption("Made-up customers and invoices. \"Handled\" means the next step is written out. Nothing is sent.")
+st.caption("Made-up customers and invoices. Actions are done in a stand-in AR system. Emails to customers are drafted, never sent.")
 
 model = st.radio(
     "Model", list(MODELS), format_func=lambda m: MODELS[m], horizontal=True,
     label_visibility="collapsed",
 )
 outcomes = load_run(model)
+
+# The saved AR system for this run. Every tick below is checked against it now,
+# when the page loads, not taken from what the run said it did.
+ar_system = load(RUNS_DIR / f"ar-system-{model}.json")
+total_actions = 0
+confirmed = 0
+for o in outcomes:
+    for action in o["actions"]:
+        total_actions += 1
+        if verify_action(ar_system, o["id"], action):
+            confirmed += 1
 received = {r["id"]: r["received"] for r in json.loads(REPLIES_PATH.read_text())}
 
 handled = [o for o in outcomes if o["status"] == "Handled"]
@@ -53,6 +66,8 @@ st.subheader(
     f"{len(handled)} of {len(outcomes)} handled · {len(to_a_person)} need a person · "
     f"${cash_with_next_step:,.0f} of overdue cash has a next step today"
 )
+
+st.write(f"**{confirmed} of {total_actions} actions confirmed in the AR system.**")
 
 # One line comparing the two models on the same replies.
 costs = {m: total_cost(load_run(m)) for m in MODELS}
@@ -78,4 +93,9 @@ for o in outcomes:
             else:
                 st.markdown("⚠️ **Needs a person**")
             st.markdown(o["reason"])
+            for action in o["actions"]:
+                if verify_action(ar_system, o["id"], action):
+                    st.markdown(f"✓ Done: {describe(action)}")
+                else:
+                    st.markdown(f"✗ Not found in the AR system: {describe(action)}")
             st.caption(f"AI read it as: {o['said']} · cost ${o['cost']:.4f}")

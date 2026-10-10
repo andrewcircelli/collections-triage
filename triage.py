@@ -11,13 +11,18 @@ invoice records, and gives each reply one of two outcomes:
 Then it compares every outcome with data/expected.json, which was written
 before this code ran.
 
+Then it does the work in a stand-in AR system (see actions.py), reads the
+saved records back, and confirms every action is really there.
+
 Run:  python triage.py
-Writes runs/triage-<model>.json for each model.
+Writes runs/triage-<model>.json and runs/ar-system-<model>.json for each model.
 """
 
 import json
 from datetime import date, timedelta
 from pathlib import Path
+
+from actions import apply_action, describe, fresh_ar_system, load, save, verify_action
 
 INVOICES_PATH = Path("data/invoices.json")
 REPLIES_PATH = Path("data/replies.json")
@@ -169,6 +174,31 @@ def triage(reply: dict, reading: dict, invoices: list[dict]):
     return HANDLED, next_step(reading, invoice, customer), invoice
 
 
+def actions_for(status: str, reason: str, reading: dict, invoice: dict | None, customer: str) -> list[dict]:
+    """The work each outcome does in the AR system. Matches the next step written out above."""
+    if status == NEEDS_A_PERSON:
+        return [{"type": "send_to_collector", "customer": customer, "reason": reason}]
+
+    intent = reading["intent"]
+    number = invoice["invoice"]
+
+    if intent == "will_pay":
+        return [{"type": "log_promise_to_pay", "invoice": number, "date": reading["promised_date"]}]
+
+    if intent == "paid":
+        return [
+            {"type": "record_payment_reported", "invoice": number, "reference": reading["reference"] or "no reference given"},
+            {"type": "pause_reminders", "invoice": number},
+        ]
+
+    # intent == "needs_document"
+    document = reading["document_needed"]
+    request = {"type": "request_document", "invoice": number, "document": document, "customer": customer}
+    if document in ["new PO", "W-9"]:
+        return [request, {"type": "pause_reminders", "invoice": number}]
+    return [request]  # an invoice copy: send it, and keep reminders on
+
+
 # ---------------------------------------------------------------------------
 # Run every reply for each model, and compare with expected.json.
 # ---------------------------------------------------------------------------
@@ -182,6 +212,7 @@ def main() -> None:
     for model in MODELS:
         readings = json.loads((RUNS_DIR / f"readings-{model}.json").read_text())
         outcomes = []
+        ar_system = fresh_ar_system(invoices)
         status_matches = 0
         reason_matches = 0
 
@@ -199,8 +230,12 @@ def main() -> None:
                 "invoice": invoice["invoice"] if invoice else None,
                 "amount_due": invoice["amount"] if invoice else None,
                 "cost": r["cost"],
+                "actions": actions_for(status, reason, r["reading"], invoice, reply["from"]),
             }
             outcomes.append(outcome)
+
+            for action in outcome["actions"]:
+                apply_action(ar_system, r["id"], action)
 
             want = expected[r["id"]]
             status_ok = outcome["status"] == want["status"]
@@ -215,6 +250,22 @@ def main() -> None:
 
         n = len(readings)
         print(f"  Status matches expected: {status_matches} of {n}. Reason matches: {reason_matches} of {n}.")
+
+        # Save the AR system, then read it back from disk and check every
+        # action against what is actually stored, not against what we meant to do.
+        ar_path = RUNS_DIR / f"ar-system-{model}.json"
+        save(ar_system, ar_path)
+        saved = load(ar_path)
+
+        done, total = 0, 0
+        for outcome in outcomes:
+            for action in outcome["actions"]:
+                total += 1
+                if verify_action(saved, outcome["id"], action):
+                    done += 1
+                else:
+                    print(f"  NOT FOUND in AR system: {outcome['id']} {describe(action)}")
+        print(f"  Actions verified in the saved AR system: {done} of {total}.")
 
         out_path = RUNS_DIR / f"triage-{model}.json"
         out_path.write_text(json.dumps(outcomes, indent=2))

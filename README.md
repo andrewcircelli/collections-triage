@@ -4,8 +4,8 @@ When an invoice goes overdue, customers reply with all sorts of things: we paid,
 we need a new PO, this line is wrong. This reads each reply, checks what the customer said against
 the actual invoices, handles the routine ones, and sends the rest to a person with the reason.
 
-Built on made-up customers and invoices. Nothing is ever sent: "Handled" means the next step is
-written out for a person to confirm.
+Built on made-up customers and invoices. Every outcome is carried out in a stand-in AR system and
+then checked there. Nothing goes to customers: emails are saved as drafts.
 
 ## How it works
 
@@ -40,6 +40,24 @@ and the first thing that failed is the reason.
 5. **Only routine documents are routine:** a new PO, a W-9 or an invoice copy. A request for a
    corrected invoice means they disagree with the bill, so it goes to a person.
 
+## The actions, and the proof they happened
+
+Every outcome does work in a stand-in AR system: one JSON file per run, `runs/ar-system-<model>.json`,
+built fresh from `data/invoices.json` (`actions.py`).
+
+| Outcome | What it does in the AR system |
+|---|---|
+| Will pay by a date | Records the promise to pay on the invoice |
+| Already paid | Records the reported payment and its reference; pauses reminders |
+| New PO or W-9 | Records the document request; drafts the email (not sent); pauses reminders |
+| Invoice copy | Records the request; drafts the email (not sent) |
+| Needs a person | Adds the reply to the collector's queue with the reason |
+
+After the run, the file is read back from disk and every action is checked against what is actually
+stored. The screen does the same check again when it loads, and shows ✓ only for what it finds. On
+the test run: 9 of 9 actions confirmed for both models. Against an untouched AR system the same
+check finds 0 of 9, so it isn't a check that always passes.
+
 "We already paid" counts as routine: the next step logs the payment and pauses reminders until it
 arrives.
 
@@ -58,7 +76,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # then fill in the two keys
 python read.py        # calls the model; costs about 3 cents for both models
-python triage.py      # plain code, free
+python triage.py      # plain code, free: decides, acts, then verifies
 streamlit run app.py  # opens the screen in the browser
 ```
 

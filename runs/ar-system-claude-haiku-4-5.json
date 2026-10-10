@@ -1,0 +1,158 @@
+{
+  "invoices": {
+    "INV-1001": {
+      "customer": "Acme Corp",
+      "reminders": "on",
+      "promise_to_pay": "2026-10-30",
+      "payment_reported": null,
+      "document_requested": null
+    },
+    "INV-1002": {
+      "customer": "Acme Corp",
+      "reminders": "paused",
+      "promise_to_pay": null,
+      "payment_reported": "ACH-88213",
+      "document_requested": null
+    },
+    "INV-1004": {
+      "customer": "Birch LLC",
+      "reminders": "paused",
+      "promise_to_pay": null,
+      "payment_reported": null,
+      "document_requested": "new PO"
+    },
+    "INV-1006": {
+      "customer": "Cedar Inc",
+      "reminders": "on",
+      "promise_to_pay": null,
+      "payment_reported": null,
+      "document_requested": null
+    },
+    "INV-1008": {
+      "customer": "Delta Co",
+      "reminders": "on",
+      "promise_to_pay": null,
+      "payment_reported": null,
+      "document_requested": null
+    },
+    "INV-1009": {
+      "customer": "Delta Co",
+      "reminders": "on",
+      "promise_to_pay": null,
+      "payment_reported": null,
+      "document_requested": null
+    }
+  },
+  "outbox": [
+    {
+      "reply": "R2",
+      "to": "Birch LLC",
+      "subject": "new PO for INV-1004",
+      "status": "draft, not sent"
+    }
+  ],
+  "collector_queue": [
+    {
+      "reply": "R3",
+      "customer": "Cedar Inc",
+      "reason": "No invoice INV-1007 on Cedar Inc's account. Their open invoice is INV-1006."
+    },
+    {
+      "reply": "R4",
+      "customer": "Delta Co",
+      "reason": "Disputes always go to a person"
+    },
+    {
+      "reply": "R6",
+      "customer": "Delta Co",
+      "reason": "Customer says they paid $1,500.00, but INV-1008 is for $1,950.00"
+    },
+    {
+      "reply": "R7",
+      "customer": "Birch LLC",
+      "reason": "No clear request in the reply"
+    }
+  ],
+  "log": [
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R1",
+      "action": {
+        "type": "log_promise_to_pay",
+        "invoice": "INV-1001",
+        "date": "2026-10-30"
+      }
+    },
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R2",
+      "action": {
+        "type": "request_document",
+        "invoice": "INV-1004",
+        "document": "new PO",
+        "customer": "Birch LLC"
+      }
+    },
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R2",
+      "action": {
+        "type": "pause_reminders",
+        "invoice": "INV-1004"
+      }
+    },
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R3",
+      "action": {
+        "type": "send_to_collector",
+        "customer": "Cedar Inc",
+        "reason": "No invoice INV-1007 on Cedar Inc's account. Their open invoice is INV-1006."
+      }
+    },
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R4",
+      "action": {
+        "type": "send_to_collector",
+        "customer": "Delta Co",
+        "reason": "Disputes always go to a person"
+      }
+    },
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R5",
+      "action": {
+        "type": "record_payment_reported",
+        "invoice": "INV-1002",
+        "reference": "ACH-88213"
+      }
+    },
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R5",
+      "action": {
+        "type": "pause_reminders",
+        "invoice": "INV-1002"
+      }
+    },
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R6",
+      "action": {
+        "type": "send_to_collector",
+        "customer": "Delta Co",
+        "reason": "Customer says they paid $1,500.00, but INV-1008 is for $1,950.00"
+      }
+    },
+    {
+      "time": "2026-10-10T14:14:16",
+      "reply": "R7",
+      "action": {
+        "type": "send_to_collector",
+        "customer": "Birch LLC",
+        "reason": "No clear request in the reply"
+      }
+    }
+  ]
+}
