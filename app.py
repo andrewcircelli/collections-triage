@@ -22,6 +22,9 @@ REPLIES_PATH = Path("data/replies.json")
 INVOICES_PATH = Path("data/invoices.json")
 EXPECTED_PATH = Path("data/expected.json")
 SUMMARY_PATH = RUNS_DIR / "repeats" / "summary.json"
+EVAL_RESULTS_PATH = Path("eval/results.json")
+EVAL_CASES_PATH = Path("eval/cases.json")
+EVAL_EXAMPLE = "E23"  # "apply the 10% your rep promised": the cheaper model missed it on every run
 
 MODELS = {
     "claude-haiku-4-5": "Cheaper model",
@@ -215,3 +218,49 @@ with system_side:
 
     drafts = ", ".join(f"{e['to']}: {e['subject']}" for e in after["outbox"])
     st.markdown(f"**Outbox ({len(after['outbox'])} draft, not sent):** {drafts}")
+
+    # The model evaluation: 30 harder labelled emails, 5 runs per model (eval_cases.py).
+    # Every number here comes from eval/results.json.
+    evaluation = json.loads(EVAL_RESULTS_PATH.read_text())
+    cheap_eval = evaluation["summary"]["claude-haiku-4-5"]
+    mid_eval = evaluation["summary"]["claude-sonnet-5-5"]
+    cases = {c["id"]: c for c in json.loads(EVAL_CASES_PATH.read_text())}
+
+    # The example: how each model's 5 runs went on one disguised dispute.
+    example = cases[EVAL_EXAMPLE]
+    cheap_example_misses = 0
+    mid_example_misses = 0
+    for r in evaluation["all_results"]:
+        if r["id"] == EVAL_EXAMPLE and r["status"] != example["expected"]:
+            if r["model"] == "claude-haiku-4-5":
+                cheap_example_misses += 1
+            else:
+                mid_example_misses += 1
+
+    extra_cost = (mid_eval["cost_per_reply"] - cheap_eval["cost_per_reply"]) * 10_000
+
+    with st.container(border=True):
+        st.markdown("**Model evaluation**")
+        st.caption(f"{len(cases)} labelled emails, harder than the 4 above · 5 runs per model · "
+                   f"{cheap_eval['readings']} outcomes each")
+        cheap_col, mid_col = st.columns(2)
+        with cheap_col:
+            st.metric("Cheaper model", f"{cheap_eval['correct_outcome'] / cheap_eval['readings']:.0%}",
+                      f"{cheap_eval['correct_outcome']} of {cheap_eval['readings']} correct", delta_color="off")
+            st.progress(cheap_eval["correct_outcome"] / cheap_eval["readings"])
+        with mid_col:
+            st.metric("Mid-tier model", f"{mid_eval['correct_outcome'] / mid_eval['readings']:.0%}",
+                      f"{mid_eval['correct_outcome']} of {mid_eval['readings']} correct", delta_color="off")
+            st.progress(mid_eval["correct_outcome"] / mid_eval["readings"])
+
+        st.markdown(f"**Example, a disguised dispute** ({example['from']}): *\"{example['email']}\"*")
+        st.markdown(f"✗ **Cheaper model** ({cheap_example_misses} of 5 runs): took it as a promise to pay and "
+                    f"missed the discount dispute. The rules allowed routine handling.")
+        st.markdown(f"✓ **Mid-tier model** ({5 - mid_example_misses} of 5 runs): recognised the dispute "
+                    f"and sent it to a person.")
+        st.caption(
+            f"Missed escalations: {cheap_eval['false_handled']} vs {mid_eval['false_handled']} of "
+            f"{cheap_eval['readings']} test runs, concentrated in disguised disputes. "
+            f"Mid-tier costs about \\${extra_cost:,.0f} more per 10,000 emails. "
+            f"Test results, not a real-world rate."
+        )
