@@ -1,28 +1,47 @@
 """The one screen: what the collector sees.
 
-Reads a saved run (runs/triage-<model>.json). It makes no model calls, so
-it opens instantly and shows the same thing every time.
+Left: each customer's email beside what happened to it.
+Right: the AR system itself, showing what the run changed.
+
+Reads a saved run (runs/). It makes no model calls, so it opens instantly
+and shows the same thing every time.
 
 Run:  streamlit run app.py
 """
 
 import json
+from datetime import date
 from pathlib import Path
 
 import streamlit as st
 
-from actions import describe, load, verify_action
+from actions import describe, fresh_ar_system, load, verify_action
 
 RUNS_DIR = Path("runs")
 REPLIES_PATH = Path("data/replies.json")
+INVOICES_PATH = Path("data/invoices.json")
+EXPECTED_PATH = Path("data/expected.json")
+SUMMARY_PATH = RUNS_DIR / "repeats" / "summary.json"
 
 MODELS = {
-    "claude-haiku-4-5": "Cheaper model (Claude Haiku 4.5)",
-    "claude-sonnet-5-5": "Mid-tier model (Claude Sonnet 5.5)",
+    "claude-haiku-4-5": "Cheaper model",
+    "claude-sonnet-5-5": "Mid-tier model",
 }
 
-# Show the caught mistake first, then the routine replies, then the rest.
-ROW_ORDER = ["R3", "R1", "R2", "R5", "R4", "R6", "R7"]
+# Which of the 5 repeat-test runs is on screen (copied into runs/readings-<model>.json).
+# For the cheaper model it's the run where it misread Delta's dispute.
+SHOWN_RUN = {"claude-haiku-4-5": 3, "claude-sonnet-5-5": 1}
+
+INTENT_WORDS = {
+    "paid": "already paid",
+    "will_pay": "will pay by a date",
+    "needs_document": "needs a document",
+    "dispute": "a dispute",
+    "unclear": "unclear",
+}
+
+# Show the caught mistake first, then the routine replies, then the dispute.
+ROW_ORDER = ["R3", "R1", "R2", "R4"]
 
 
 def load_run(model: str) -> list[dict]:
@@ -31,71 +50,130 @@ def load_run(model: str) -> list[dict]:
     return [by_id[i] for i in ROW_ORDER]
 
 
-def total_cost(outcomes: list[dict]) -> float:
-    return sum(o["cost"] for o in outcomes)
+def cost_per_reply(model: str) -> float:
+    outcomes = load_run(model)
+    return sum(o["cost"] for o in outcomes) / len(outcomes)
+
+
+def show(value) -> str:
+    """A cell value as the screen shows it: dates as 'Oct 30', empty as a dash."""
+    if value is None:
+        return "—"
+    try:
+        d = date.fromisoformat(value)
+        return f"{d.strftime('%b')} {d.day}"
+    except ValueError:
+        return value
+
+
+def cell(before, after) -> str:
+    """Unchanged: the value. Changed: the old value struck through, the new one in bold."""
+    if before == after:
+        return show(after)
+    if before is None:
+        return f"**{show(after)}**"
+    return f"~~{show(before)}~~ **{show(after)}**"
 
 
 st.set_page_config(page_title="Collections reply triage", layout="wide")
-st.title("Collections reply triage")
-st.caption("Made-up customers and invoices. Actions are done in a stand-in AR system. Emails to customers are drafted, never sent.")
 
-model = st.radio(
-    "Model", list(MODELS), format_func=lambda m: MODELS[m], horizontal=True,
-    label_visibility="collapsed",
-)
+title, picker = st.columns([3, 2])
+with title:
+    st.subheader("Collections reply triage")
+    st.caption("Made-up customers and invoices. Emails to customers are drafted, never sent.")
+with picker:
+    model = st.radio(
+        "Which model read the replies", list(MODELS), format_func=lambda m: MODELS[m], horizontal=True,
+    )
+
 outcomes = load_run(model)
+received = {r["id"]: r["received"] for r in json.loads(REPLIES_PATH.read_text())}
+expected_intent = {e["id"]: e["intent"] for e in json.loads(EXPECTED_PATH.read_text())}
+summary = json.loads(SUMMARY_PATH.read_text())
 
-# The saved AR system for this run. Every tick below is checked against it now,
-# when the page loads, not taken from what the run said it did.
-ar_system = load(RUNS_DIR / f"ar-system-{model}.json")
+# Before: the AR system as the run found it. After: the saved file, read now.
+# Every tick on this page is checked against the saved file when the page loads.
+before = fresh_ar_system(json.loads(INVOICES_PATH.read_text()))
+after = load(RUNS_DIR / f"ar-system-{model}.json")
+
+handled = 0
 total_actions = 0
 confirmed = 0
 for o in outcomes:
+    if o["status"] == "Handled":
+        handled += 1
     for action in o["actions"]:
         total_actions += 1
-        if verify_action(ar_system, o["id"], action):
+        if verify_action(after, o["id"], action):
             confirmed += 1
-received = {r["id"]: r["received"] for r in json.loads(REPLIES_PATH.read_text())}
 
-handled = [o for o in outcomes if o["status"] == "Handled"]
-to_a_person = [o for o in outcomes if o["status"] != "Handled"]
-cash_with_next_step = sum(o["amount_due"] for o in handled)
-
-# The summary line.
-st.subheader(
-    f"{len(handled)} of {len(outcomes)} handled · {len(to_a_person)} need a person · "
-    f"${cash_with_next_step:,.0f} of overdue cash has a next step today"
+st.markdown(
+    f"**{handled} of {len(outcomes)} handled · {len(outcomes) - handled} need a person · "
+    f"{confirmed} of {total_actions} actions confirmed in the AR system** · "
+    f"cost per reply: ${cost_per_reply('claude-haiku-4-5'):.4f} cheaper model, "
+    f"${cost_per_reply('claude-sonnet-5-5'):.4f} mid-tier"
 )
 
-st.write(f"**{confirmed} of {total_actions} actions confirmed in the AR system.**")
-
-# One line comparing the two models on the same replies.
-costs = {m: total_cost(load_run(m)) for m in MODELS}
-st.write(
-    f"Cost to read all {len(outcomes)} replies: "
-    f"cheaper model ${costs['claude-haiku-4-5']:.3f}, "
-    f"mid-tier model ${costs['claude-sonnet-5-5']:.3f}. "
-    f"This run: ${total_cost(outcomes) / len(outcomes):.4f} per reply."
+# The repeat test, in one line: each model read the same emails 5 times.
+cheap = summary["claude-haiku-4-5"]
+mid = summary["claude-sonnet-5-5"]
+st.caption(
+    f"Showing run {SHOWN_RUN[model]} of 5. Repeat test, 5 runs per model: "
+    f"cheaper model read {cheap['read_right']} of {cheap['total']} emails as expected and got the "
+    f"expected outcome on {cheap['outcome_right']} of {cheap['total']}; "
+    f"mid-tier read {mid['read_right']} of {mid['total']}, outcome {mid['outcome_right']} of {mid['total']}."
 )
 
-st.divider()
+replies_side, system_side = st.columns([3, 2], gap="large")
 
-# One row per reply: the customer's own email on the left, the decision on the right.
-for o in outcomes:
-    with st.container(border=True):
-        left, right = st.columns([1, 1])
-        with left:
-            st.markdown(f"**{o['from']}** · received {received[o['id']]}")
-            st.markdown(f"> {o['email']}")
-        with right:
-            if o["status"] == "Handled":
-                st.markdown("✅ **Handled**")
-            else:
-                st.markdown("⚠️ **Needs a person**")
-            st.markdown(o["reason"])
-            for action in o["actions"]:
-                if verify_action(ar_system, o["id"], action):
-                    st.markdown(f"✓ Done: {describe(action)}")
+# Left: one row per reply, the customer's own email beside the decision.
+with replies_side:
+    for o in outcomes:
+        with st.container(border=True):
+            email, decision = st.columns([1, 1])
+            with email:
+                st.markdown(f"**{o['from']}** · {show(received[o['id']])}")
+                st.caption(o["email"])
+            with decision:
+                if o["status"] == "Handled":
+                    st.markdown(f"✅ **Handled.** {o['reason']}")
                 else:
-                    st.markdown(f"✗ Not found in the AR system: {describe(action)}")
-            st.caption(f"AI read it as: {o['said']} · cost ${o['cost']:.4f}")
+                    st.markdown(f"⚠️ **Needs a person.** {o['reason']}")
+                if o["read_as"] != expected_intent[o["id"]]:
+                    misread = (
+                        f"The model misread this as \"{INTENT_WORDS[o['read_as']]}\", "
+                        f"not \"{INTENT_WORDS[expected_intent[o['id']]]}\"."
+                    )
+                    if o["status"] == "Needs a person":
+                        st.warning(f"{misread} A check still sent it to a person.")
+                    else:
+                        st.error(f"{misread} No check caught it.")
+                for action in o["actions"]:
+                    if verify_action(after, o["id"], action):
+                        st.caption(f"✓ Done: {describe(action)}")
+                    else:
+                        st.caption(f"✗ Not found in the AR system: {describe(action)}")
+
+# Right: the AR system itself.
+with system_side:
+    st.markdown("**The AR system after this run**")
+    rows = [
+        "| Invoice | Reminders | Promise to pay | Document requested |",
+        "|---|---|---|---|",
+    ]
+    for number, record in after["invoices"].items():
+        was = before["invoices"][number]
+        rows.append(
+            f"| {number} {record['customer']} "
+            f"| {cell(was['reminders'], record['reminders'])} "
+            f"| {cell(was['promise_to_pay'], record['promise_to_pay'])} "
+            f"| {cell(was['document_requested'], record['document_requested'])} |"
+        )
+    st.markdown("\n".join(rows))
+    st.caption("Bold is what this run changed. Struck through is what it was before.")
+
+    queue = ", ".join(item["customer"] for item in after["collector_queue"])
+    st.markdown(f"**Collector's queue ({len(after['collector_queue'])}):** {queue}")
+
+    drafts = ", ".join(f"{e['to']}: {e['subject']}" for e in after["outbox"])
+    st.markdown(f"**Outbox ({len(after['outbox'])} draft, not sent):** {drafts}")

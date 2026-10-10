@@ -22,23 +22,5 @@
     "from": "Delta Co",
     "received": "2026-10-06",
     "email": "We're holding INV-1009. Line 3 bills an on-site training session that never happened; it was cancelled in July. Please send a corrected invoice and we'll pay the rest."
-  },
-  {
-    "id": "R5",
-    "from": "Acme Corp",
-    "received": "2026-10-06",
-    "email": "Quick note: INV-1002 for $2,150 went out by ACH yesterday, reference ACH-88213. Should land in a day or two."
-  },
-  {
-    "id": "R6",
-    "from": "Delta Co",
-    "received": "2026-10-06",
-    "email": "Re: INV-1008. We paid $1,500 on this last week by check #2290, which is what we have approved. Let me know if you need anything else."
-  },
-  {
-    "id": "R7",
-    "from": "Birch LLC",
-    "received": "2026-10-06",
-    "email": "This is the third one of these this month. I've forwarded it on. Please take me off these emails."
   }
 ]

@@ -10,16 +10,6 @@
     ]
   },
   {
-    "invoice": "INV-1002",
-    "customer": "Acme Corp",
-    "amount": 2150.00,
-    "due_date": "2026-09-30",
-    "lines": [
-      {"line": 1, "description": "Additional user seats (25)", "amount": 1875.00},
-      {"line": 2, "description": "Sandbox environment", "amount": 275.00}
-    ]
-  },
-  {
     "invoice": "INV-1004",
     "customer": "Birch LLC",
     "amount": 3600.00,
@@ -37,15 +27,6 @@
     "lines": [
       {"line": 1, "description": "Platform subscription, Q3", "amount": 4500.00},
       {"line": 2, "description": "API overage, August", "amount": 700.00}
-    ]
-  },
-  {
-    "invoice": "INV-1008",
-    "customer": "Delta Co",
-    "amount": 1950.00,
-    "due_date": "2026-09-20",
-    "lines": [
-      {"line": 1, "description": "Data export add-on, Q3", "amount": 1950.00}
     ]
   },
   {

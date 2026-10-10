@@ -1,0 +1,29 @@
+{
+  "claude-haiku-4-5": {
+    "runs": 5,
+    "total": 20,
+    "read_right": 19,
+    "outcome_right": 20,
+    "reason_right": 19,
+    "misreads": [
+      {
+        "run": 3,
+        "reply": "R4",
+        "from": "Delta Co",
+        "read_as": "needs_document",
+        "should_be": "dispute",
+        "outcome_still_right": true,
+        "outcome": "Needs a person",
+        "reason": "Asks for a corrected invoice, which means they disagree with the bill"
+      }
+    ]
+  },
+  "claude-sonnet-5-5": {
+    "runs": 5,
+    "total": 20,
+    "read_right": 20,
+    "outcome_right": 20,
+    "reason_right": 20,
+    "misreads": []
+  }
+}

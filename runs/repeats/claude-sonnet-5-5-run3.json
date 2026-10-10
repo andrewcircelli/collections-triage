@@ -1,0 +1,70 @@
+[
+  {
+    "id": "R1",
+    "from": "Acme Corp",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "will_pay",
+      "summary": "Will pay INV-1001 in full by Oct 30",
+      "invoice_number": "INV-1001",
+      "amount": null,
+      "promised_date": "2026-10-30",
+      "document_needed": null,
+      "reference": null
+    },
+    "input_tokens": 1236,
+    "output_tokens": 81,
+    "cost": 0.003282
+  },
+  {
+    "id": "R2",
+    "from": "Birch LLC",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "needs_document",
+      "summary": "Cannot pay INV-1004 until a new PO is provided since the old PO expired",
+      "invoice_number": "INV-1004",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": "new PO",
+      "reference": null
+    },
+    "input_tokens": 1253,
+    "output_tokens": 87,
+    "cost": 0.003376
+  },
+  {
+    "id": "R3",
+    "from": "Cedar Inc",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "paid",
+      "summary": "Says INV-1007 was already paid by check #4471 mailed September 24",
+      "invoice_number": "INV-1007",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": null,
+      "reference": "#4471"
+    },
+    "input_tokens": 1222,
+    "output_tokens": 84,
+    "cost": 0.003284
+  },
+  {
+    "id": "R4",
+    "from": "Delta Co",
+    "model": "claude-sonnet-5-5",
+    "reading": {
+      "intent": "dispute",
+      "summary": "Disputes line 3 of INV-1009 (cancelled on-site training) and requests a corrected invoice",
+      "invoice_number": "INV-1009",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": "corrected invoice",
+      "reference": null
+    },
+    "input_tokens": 1237,
+    "output_tokens": 97,
+    "cost": 0.003444
+  }
+]

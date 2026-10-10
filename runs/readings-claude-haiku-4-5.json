@@ -13,8 +13,8 @@
       "reference": null
     },
     "input_tokens": 1008,
-    "output_tokens": 62,
-    "cost": 0.001318
+    "output_tokens": 72,
+    "cost": 0.001368
   },
   {
     "id": "R2",
@@ -22,7 +22,7 @@
     "model": "claude-haiku-4-5",
     "reading": {
       "intent": "needs_document",
-      "summary": "Cannot pay INV-1004 until a new PO request is received and approved.",
+      "summary": "Birch LLC needs a new PO request before they can pay INV-1004.",
       "invoice_number": "INV-1004",
       "amount": null,
       "promised_date": null,
@@ -30,8 +30,8 @@
       "reference": null
     },
     "input_tokens": 1024,
-    "output_tokens": 73,
-    "cost": 0.001389
+    "output_tokens": 74,
+    "cost": 0.001394
   },
   {
     "id": "R3",
@@ -39,7 +39,7 @@
     "model": "claude-haiku-4-5",
     "reading": {
       "intent": "paid",
-      "summary": "Check #4471 for INV-1007 was mailed on September 24",
+      "summary": "Already paid INV-1007 with check #4471 mailed on September 24.",
       "invoice_number": "INV-1007",
       "amount": null,
       "promised_date": null,
@@ -47,16 +47,16 @@
       "reference": "4471"
     },
     "input_tokens": 1002,
-    "output_tokens": 61,
-    "cost": 0.001307
+    "output_tokens": 72,
+    "cost": 0.001362
   },
   {
     "id": "R4",
     "from": "Delta Co",
     "model": "claude-haiku-4-5",
     "reading": {
-      "intent": "dispute",
-      "summary": "INV-1009 line 3 for cancelled training should be removed; will pay corrected invoice",
+      "intent": "needs_document",
+      "summary": "INV-1009 line 3 for cancelled training is disputed; customer needs corrected invoice to pay.",
       "invoice_number": "INV-1009",
       "amount": null,
       "promised_date": null,
@@ -64,58 +64,7 @@
       "reference": null
     },
     "input_tokens": 1010,
-    "output_tokens": 75,
-    "cost": 0.001385
-  },
-  {
-    "id": "R5",
-    "from": "Acme Corp",
-    "model": "claude-haiku-4-5",
-    "reading": {
-      "intent": "paid",
-      "summary": "INV-1002 for $2,150 sent via ACH yesterday, reference ACH-88213, arriving in 1-2 days.",
-      "invoice_number": "INV-1002",
-      "amount": 2150.0,
-      "promised_date": null,
-      "document_needed": null,
-      "reference": "ACH-88213"
-    },
-    "input_tokens": 1006,
-    "output_tokens": 90,
-    "cost": 0.001456
-  },
-  {
-    "id": "R6",
-    "from": "Delta Co",
-    "model": "claude-haiku-4-5",
-    "reading": {
-      "intent": "paid",
-      "summary": "Paid INV-1008 for $1,500 by check #2290",
-      "invoice_number": "INV-1008",
-      "amount": 1500.0,
-      "promised_date": null,
-      "document_needed": null,
-      "reference": "2290"
-    },
-    "input_tokens": 1008,
-    "output_tokens": 73,
-    "cost": 0.001373
-  },
-  {
-    "id": "R7",
-    "from": "Birch LLC",
-    "model": "claude-haiku-4-5",
-    "reading": {
-      "intent": "unclear",
-      "summary": "Customer reports receiving multiple reminders and requests to be removed from mailing list.",
-      "invoice_number": null,
-      "amount": null,
-      "promised_date": null,
-      "document_needed": null,
-      "reference": null
-    },
-    "input_tokens": 993,
-    "output_tokens": 53,
-    "cost": 0.001258
+    "output_tokens": 78,
+    "cost": 0.0014
   }
 ]

@@ -22,7 +22,7 @@
     "model": "claude-sonnet-5-5",
     "reading": {
       "intent": "needs_document",
-      "summary": "Cannot pay INV-1004 until a new PO is provided because the old PO expired",
+      "summary": "Cannot pay INV-1004 until a new PO is issued because the old PO expired",
       "invoice_number": "INV-1004",
       "amount": null,
       "promised_date": null,
@@ -66,56 +66,5 @@
     "input_tokens": 1237,
     "output_tokens": 97,
     "cost": 0.003444
-  },
-  {
-    "id": "R5",
-    "from": "Acme Corp",
-    "model": "claude-sonnet-5-5",
-    "reading": {
-      "intent": "paid",
-      "summary": "Paid INV-1002 ($2,150) by ACH on 2026-10-05, reference ACH-88213",
-      "invoice_number": "INV-1002",
-      "amount": 2150.0,
-      "promised_date": null,
-      "document_needed": null,
-      "reference": "ACH-88213"
-    },
-    "input_tokens": 1227,
-    "output_tokens": 100,
-    "cost": 0.003454
-  },
-  {
-    "id": "R6",
-    "from": "Delta Co",
-    "model": "claude-sonnet-5-5",
-    "reading": {
-      "intent": "paid",
-      "summary": "Says INV-1008 was paid $1,500 last week by check #2290",
-      "invoice_number": "INV-1008",
-      "amount": 1500.0,
-      "promised_date": null,
-      "document_needed": null,
-      "reference": "#2290"
-    },
-    "input_tokens": 1226,
-    "output_tokens": 84,
-    "cost": 0.003292
-  },
-  {
-    "id": "R7",
-    "from": "Birch LLC",
-    "model": "claude-sonnet-5-5",
-    "reading": {
-      "intent": "unclear",
-      "summary": "Customer says they forwarded the reminder and asks to be removed from these emails",
-      "invoice_number": null,
-      "amount": null,
-      "promised_date": null,
-      "document_needed": null,
-      "reference": null
-    },
-    "input_tokens": 1209,
-    "output_tokens": 77,
-    "cost": 0.003188
   }
 ]

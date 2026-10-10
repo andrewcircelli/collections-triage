@@ -1,0 +1,70 @@
+[
+  {
+    "id": "R1",
+    "from": "Acme Corp",
+    "model": "claude-haiku-4-5",
+    "reading": {
+      "intent": "will_pay",
+      "summary": "Will pay INV-1001 in full by October 30",
+      "invoice_number": "INV-1001",
+      "amount": null,
+      "promised_date": "2026-10-30",
+      "document_needed": null,
+      "reference": null
+    },
+    "input_tokens": 1008,
+    "output_tokens": 72,
+    "cost": 0.001368
+  },
+  {
+    "id": "R2",
+    "from": "Birch LLC",
+    "model": "claude-haiku-4-5",
+    "reading": {
+      "intent": "needs_document",
+      "summary": "Birch LLC needs a new PO request before they can pay INV-1004.",
+      "invoice_number": "INV-1004",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": "new PO",
+      "reference": null
+    },
+    "input_tokens": 1024,
+    "output_tokens": 74,
+    "cost": 0.001394
+  },
+  {
+    "id": "R3",
+    "from": "Cedar Inc",
+    "model": "claude-haiku-4-5",
+    "reading": {
+      "intent": "paid",
+      "summary": "Already paid INV-1007 with check #4471 mailed on September 24.",
+      "invoice_number": "INV-1007",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": null,
+      "reference": "4471"
+    },
+    "input_tokens": 1002,
+    "output_tokens": 72,
+    "cost": 0.001362
+  },
+  {
+    "id": "R4",
+    "from": "Delta Co",
+    "model": "claude-haiku-4-5",
+    "reading": {
+      "intent": "needs_document",
+      "summary": "INV-1009 line 3 for cancelled training is disputed; customer needs corrected invoice to pay.",
+      "invoice_number": "INV-1009",
+      "amount": null,
+      "promised_date": null,
+      "document_needed": "corrected invoice",
+      "reference": null
+    },
+    "input_tokens": 1010,
+    "output_tokens": 78,
+    "cost": 0.0014
+  }
+]
