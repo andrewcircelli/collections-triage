@@ -128,13 +128,13 @@ exceptions = len(outcomes) - handled
 
 handled_tile, processed_tile, exceptions_tile, cash_tile = st.columns(4)
 handled_tile.metric("Handled without a collector", f"{handled / len(outcomes):.0%}",
-                    f"{handled} of {len(outcomes)} replies", delta_color="off")
+                    f"{handled} of {len(outcomes)} replies", delta_color="off", delta_arrow="off")
 processed_tile.metric("Customer replies processed", f"{processed} of {len(outcomes)}",
-                      f"{confirmed} of {total_actions} actions confirmed", delta_color="off")
+                      f"{confirmed} of {total_actions} actions confirmed", delta_color="off", delta_arrow="off")
 exceptions_tile.metric("Exceptions routed for review", f"{exceptions}",
-                       "each with the reason", delta_color="off")
+                       "each with the reason", delta_color="off", delta_arrow="off")
 cash_tile.metric("Overdue cash handled automatically", f"${cash_handled:,.0f}",
-                 f"of ${cash_overdue:,.0f} overdue", delta_color="off")
+                 f"of ${cash_overdue:,.0f} overdue", delta_color="off", delta_arrow="off")
 
 st.caption(
     f"On 4 made-up replies, so these show how it works, not a forecast; a pilot measures the real rates. "
@@ -246,11 +246,11 @@ with system_side:
         cheap_col, mid_col = st.columns(2)
         with cheap_col:
             st.metric("Cheaper model", f"{cheap_eval['correct_outcome'] / cheap_eval['readings']:.0%}",
-                      f"{cheap_eval['correct_outcome']} of {cheap_eval['readings']} correct", delta_color="off")
+                      f"{cheap_eval['correct_outcome']} of {cheap_eval['readings']} correct", delta_color="off", delta_arrow="off")
             st.progress(cheap_eval["correct_outcome"] / cheap_eval["readings"])
         with mid_col:
             st.metric("Mid-tier model", f"{mid_eval['correct_outcome'] / mid_eval['readings']:.0%}",
-                      f"{mid_eval['correct_outcome']} of {mid_eval['readings']} correct", delta_color="off")
+                      f"{mid_eval['correct_outcome']} of {mid_eval['readings']} correct", delta_color="off", delta_arrow="off")
             st.progress(mid_eval["correct_outcome"] / mid_eval["readings"])
 
         st.markdown(f"**Example, a disguised dispute** ({example['from']}): *\"{example['email']}\"*")
