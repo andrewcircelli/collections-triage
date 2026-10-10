@@ -110,19 +110,26 @@ for o in outcomes:
 st.markdown(
     f"**{handled} of {len(outcomes)} handled · {len(outcomes) - handled} need a person · "
     f"{confirmed} of {total_actions} actions confirmed in the AR system** · "
-    f"cost per reply: ${cost_per_reply('claude-haiku-4-5'):.4f} cheaper model, "
-    f"${cost_per_reply('claude-sonnet-5-5'):.4f} mid-tier"
+    f"cost per reply: \\${cost_per_reply('claude-haiku-4-5'):.4f} cheaper model, "
+    f"\\${cost_per_reply('claude-sonnet-5-5'):.4f} mid-tier"
 )
 
-# The repeat test, in one line: each model read the same emails 5 times.
-cheap = summary["claude-haiku-4-5"]
-mid = summary["claude-sonnet-5-5"]
-st.caption(
-    f"Showing run {SHOWN_RUN[model]} of 5. Repeat test, 5 runs per model: "
-    f"cheaper model read {cheap['read_right']} of {cheap['total']} emails as expected and got the "
-    f"expected outcome on {cheap['outcome_right']} of {cheap['total']}; "
-    f"mid-tier read {mid['read_right']} of {mid['total']}, outcome {mid['outcome_right']} of {mid['total']}."
+# The repeat test, in plain words: which run is on screen, and the totals over all 5.
+ORDINAL = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 5: "5th"}
+this_model = summary[model]
+misread_here = []
+for m in this_model["misreads"]:
+    if m["run"] == SHOWN_RUN[model]:
+        misread_here.append(m["from"])
+
+line = f"Each model read these 4 emails 5 times. This is the {MODELS[model].lower()}'s {ORDINAL[SHOWN_RUN[model]]} run"
+if misread_here:
+    line += f", the one where it misread {', '.join(misread_here)}"
+line += (
+    f". Over all 5 runs it read {this_model['read_right']} of {this_model['total']} emails as expected "
+    f"and got the right outcome {this_model['outcome_right']} of {this_model['total']} times."
 )
+st.caption(line)
 
 replies_side, system_side = st.columns([3, 2], gap="large")
 
@@ -141,10 +148,16 @@ with replies_side:
                     st.markdown(f"⚠️ **Needs a person.** {o['reason']}")
                 if o["read_as"] != expected_intent[o["id"]]:
                     misread = (
-                        f"The model misread this as \"{INTENT_WORDS[o['read_as']]}\", "
-                        f"not \"{INTENT_WORDS[expected_intent[o['id']]]}\"."
+                        f"The model labelled this \"{INTENT_WORDS[o['read_as']]}\" "
+                        f"instead of \"{INTENT_WORDS[expected_intent[o['id']]]}\"."
                     )
-                    if o["status"] == "Needs a person":
+                    if o["status"] == "Needs a person" and o["read_as"] == "needs_document":
+                        st.warning(
+                            f"{misread} Taken as a request for a {o['document_read']}, it would have been "
+                            f"handled as routine paperwork. The document rule sent it to a person anyway: "
+                            f"asking for a {o['document_read']} means they disagree with the bill."
+                        )
+                    elif o["status"] == "Needs a person":
                         st.warning(f"{misread} A check still sent it to a person.")
                     else:
                         st.error(f"{misread} No check caught it.")

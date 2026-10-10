@@ -226,6 +226,7 @@ def main() -> None:
                 "email": reply["email"],
                 "said": r["reading"]["summary"],
                 "read_as": r["reading"]["intent"],
+                "document_read": r["reading"]["document_needed"],
                 "status": status,
                 "reason": reason,
                 "invoice": invoice["invoice"] if invoice else None,

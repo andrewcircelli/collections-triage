@@ -18,7 +18,7 @@ actions verify_action() finds in the saved file.
 """
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 
@@ -116,7 +116,8 @@ def describe(action: dict) -> str:
     """The action as a sentence for the screen."""
     kind = action["type"]
     if kind == "log_promise_to_pay":
-        return f"Promise to pay recorded on {action['invoice']} for {action['date']}"
+        promised = date.fromisoformat(action["date"])
+        return f"Promise to pay recorded on {action['invoice']} for {promised.strftime('%b')} {promised.day}"
     if kind == "pause_reminders":
         return f"Reminders on {action['invoice']} paused"
     if kind == "record_payment_reported":

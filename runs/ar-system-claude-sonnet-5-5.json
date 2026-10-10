@@ -51,7 +51,7 @@
   ],
   "log": [
     {
-      "time": "2026-10-10T14:37:07",
+      "time": "2026-10-10T14:47:18",
       "reply": "R1",
       "action": {
         "type": "log_promise_to_pay",
@@ -60,7 +60,7 @@
       }
     },
     {
-      "time": "2026-10-10T14:37:07",
+      "time": "2026-10-10T14:47:18",
       "reply": "R2",
       "action": {
         "type": "request_document",
@@ -70,7 +70,7 @@
       }
     },
     {
-      "time": "2026-10-10T14:37:07",
+      "time": "2026-10-10T14:47:18",
       "reply": "R2",
       "action": {
         "type": "pause_reminders",
@@ -78,7 +78,7 @@
       }
     },
     {
-      "time": "2026-10-10T14:37:07",
+      "time": "2026-10-10T14:47:18",
       "reply": "R3",
       "action": {
         "type": "send_to_collector",
@@ -87,7 +87,7 @@
       }
     },
     {
-      "time": "2026-10-10T14:37:07",
+      "time": "2026-10-10T14:47:18",
       "reply": "R4",
       "action": {
         "type": "send_to_collector",
