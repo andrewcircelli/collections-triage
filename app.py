@@ -1,11 +1,17 @@
-"""The one screen.
+"""The one screen, framed as a process change: before and after.
 
-Top: the business results for the run shown (handled, processed,
-exceptions, receivables actioned).
-Left: each customer's email beside what happened to it, with each action
-confirmed against the AR system, and a note wherever the model misread.
-Right: the AR system itself, showing what the run changed; under it, the
-model evaluation on 30 harder emails (from eval/results.json).
+Top: the change in one line, then three results for the run shown:
+  efficiency     replies closed without a collector
+  effectiveness  exceptions that reached a person, out of those that should
+  proof          actions done and confirmed in the AR system
+Below that, three tabs, one per point in the conversation:
+  1. The replies: each customer's email beside what happened to it.
+  2. The AR system: what the run changed, before and after.
+  3. Which model to trust: the rules catch some model mistakes, not all;
+     the evaluation on 30 harder emails (from eval/results.json).
+
+The first two tabs show the mid-tier model's run, the model the evaluation
+chose. Tab 3 uses the cheaper model's run for the Delta example.
 
 Reads saved runs (runs/ and eval/). It makes no model calls, so it opens
 instantly and shows the same thing every time.
@@ -26,19 +32,15 @@ RUNS_DIR = Path("runs")
 REPLIES_PATH = Path("data/replies.json")
 INVOICES_PATH = Path("data/invoices.json")
 EXPECTED_PATH = Path("data/expected.json")
-SUMMARY_PATH = RUNS_DIR / "repeats" / "summary.json"
 EVAL_RESULTS_PATH = Path("eval/results.json")
 EVAL_CASES_PATH = Path("eval/cases.json")
 EVAL_EXAMPLE = "E23"  # "apply the 10% your rep promised": the cheaper model missed it on every run
 
-MODELS = {
-    "claude-haiku-4-5": "Cheaper model",
-    "claude-sonnet-5-5": "Mid-tier model",
-}
+CHEAPER = "claude-haiku-4-5"
+MID_TIER = "claude-sonnet-5-5"
 
-# Which of the 5 repeat-test runs is on screen (copied into runs/readings-<model>.json).
-# For the cheaper model it's the run where it misread Delta's dispute.
-SHOWN_RUN = {"claude-haiku-4-5": 3, "claude-sonnet-5-5": 1}
+# The run on the first two tabs: the mid-tier model, which the evaluation chose.
+SHOWN_MODEL = MID_TIER
 
 INTENT_WORDS = {
     "paid": "already paid",
@@ -96,89 +98,63 @@ def cell(before, after) -> str:
 
 st.set_page_config(page_title="Collections reply triage", layout="wide")
 
-title, picker = st.columns([3, 2])
-with title:
-    st.subheader("Collections reply triage")
-    st.caption("Made-up customers and invoices. Emails to customers are drafted, never sent.")
-with picker:
-    model = st.radio(
-        "Which model read the replies", list(MODELS), format_func=lambda m: MODELS[m], horizontal=True,
-    )
+st.subheader("Collections reply triage")
+large("<b>Before:</b> a collector reads every reply to an overdue reminder and updates the AR system by hand.<br>"
+      "<b>After:</b> routine replies are done and checked automatically. The collector reads only the "
+      "exceptions, each with the reason.")
+st.caption("Made-up customers and invoices. Saved runs, no live model calls. Emails to customers are drafted, never sent.")
 
-outcomes = load_run(model)
+outcomes = load_run(SHOWN_MODEL)
+expected = {e["id"]: e for e in json.loads(EXPECTED_PATH.read_text())}
 received = {r["id"]: r["received"] for r in json.loads(REPLIES_PATH.read_text())}
-expected_intent = {e["id"]: e["intent"] for e in json.loads(EXPECTED_PATH.read_text())}
-summary = json.loads(SUMMARY_PATH.read_text())
+invoices = json.loads(INVOICES_PATH.read_text())
 
 # Before: the AR system as the run found it. After: the saved file, read now.
 # Every tick on this page is checked against the saved file when the page loads.
-before = fresh_ar_system(json.loads(INVOICES_PATH.read_text()))
-after = load(RUNS_DIR / f"ar-system-{model}.json")
+before = fresh_ar_system(invoices)
+after = load(RUNS_DIR / f"ar-system-{SHOWN_MODEL}.json")
 
-# The business results. A reply counts as processed when it got an outcome
-# and every action for it is confirmed in the AR system.
+# The three results.
 handled = 0
-processed = 0
+cash_actioned = 0.0
+exceptions_expected = 0
+exceptions_caught = 0
 total_actions = 0
 confirmed = 0
-cash_handled = 0.0
-cash_overdue = 0.0
 for o in outcomes:
-    all_done = True
+    if o["status"] == "Handled":
+        handled += 1
+        cash_actioned += o["amount_due"]
+    if expected[o["id"]]["status"] == "Needs a person":
+        exceptions_expected += 1
+        if o["status"] == "Needs a person":
+            exceptions_caught += 1
     for action in o["actions"]:
         total_actions += 1
         if verify_action(after, o["id"], action):
             confirmed += 1
-        else:
-            all_done = False
-    if all_done:
-        processed += 1
-    if o["status"] == "Handled":
-        handled += 1
-        cash_handled += o["amount_due"]
 
-for inv in json.loads(INVOICES_PATH.read_text()):
+cash_overdue = 0.0
+for inv in invoices:
     cash_overdue += inv["amount"]
 
-exceptions = len(outcomes) - handled
+efficiency_tile, effectiveness_tile, proof_tile = st.columns(3)
+efficiency_tile.metric("Efficiency: replies closed without a collector", f"{handled} of {len(outcomes)}",
+                       f"\\${cash_actioned:,.0f} of \\${cash_overdue:,.0f} overdue actioned",
+                       delta_color="off", delta_arrow="off")
+effectiveness_tile.metric("Effectiveness: exceptions that reached a person",
+                          f"{exceptions_caught} of {exceptions_expected}", "each with the reason",
+                          delta_color="off", delta_arrow="off")
+proof_tile.metric("Proof: actions confirmed in the AR system", f"{confirmed} of {total_actions}",
+                  "read back from the saved records", delta_color="off", delta_arrow="off")
+st.caption("Four made-up replies show how it works, not a forecast. A pilot measures the real rates.")
 
-handled_tile, processed_tile, exceptions_tile, cash_tile = st.columns(4)
-handled_tile.metric("Handled without a collector", f"{handled / len(outcomes):.0%}",
-                    f"{handled} of {len(outcomes)} replies", delta_color="off", delta_arrow="off")
-processed_tile.metric("Customer replies processed", f"{processed} of {len(outcomes)}",
-                      f"{confirmed} of {total_actions} actions confirmed", delta_color="off", delta_arrow="off")
-exceptions_tile.metric("Exceptions routed for review", f"{exceptions}",
-                       "each with the reason", delta_color="off", delta_arrow="off")
-cash_tile.metric("Overdue receivables actioned", f"${cash_handled:,.0f}",
-                 f"of ${cash_overdue:,.0f} overdue", delta_color="off", delta_arrow="off")
-
-st.caption(
-    f"On 4 made-up replies, so these show how it works, not a forecast; a pilot measures the real rates. "
-    f"Cost per reply: \\${cost_per_reply('claude-haiku-4-5'):.4f} cheaper model, "
-    f"\\${cost_per_reply('claude-sonnet-5-5'):.4f} mid-tier."
+replies_tab, system_tab, model_tab = st.tabs(
+    ["1 · The replies", "2 · The AR system, before and after", "3 · Which model to trust"]
 )
 
-# The repeat test, in plain words: which run is on screen, and the totals over all 5.
-ORDINAL = {1: "1st", 2: "2nd", 3: "3rd", 4: "4th", 5: "5th"}
-this_model = summary[model]
-misread_here = []
-for m in this_model["misreads"]:
-    if m["run"] == SHOWN_RUN[model]:
-        misread_here.append(m["from"])
-
-line = f"Each model read these 4 emails 5 times. This is the {MODELS[model].lower()}'s {ORDINAL[SHOWN_RUN[model]]} run"
-if misread_here:
-    line += f", the one where it misread {', '.join(misread_here)}"
-line += (
-    f". Over all 5 runs it read {this_model['read_right']} of {this_model['total']} emails as expected "
-    f"and got the right outcome {this_model['outcome_right']} of {this_model['total']} times."
-)
-st.caption(line)
-
-replies_side, system_side = st.columns([3, 2], gap="large")
-
-# Left: one row per reply, the customer's own email beside the decision.
-with replies_side:
+# Tab 1: one row per reply, the customer's own email beside what happened to it.
+with replies_tab:
     for o in outcomes:
         with st.container(border=True):
             email, decision = st.columns([1, 1])
@@ -190,27 +166,14 @@ with replies_side:
                     st.markdown(f"✅ **Handled.** {o['reason']}")
                 else:
                     st.markdown(f"⚠️ **Needs a person.** {o['reason']}")
-                if o["read_as"] != expected_intent[o["id"]]:
-                    misread = (
-                        f"<b>The model misread this</b> as \u201c{INTENT_WORDS[o['read_as']]}\u201d, "
-                        f"not \u201c{INTENT_WORDS[expected_intent[o['id']]]}\u201d."
-                    )
-                    if o["status"] == "Needs a person" and o["read_as"] == "needs_document":
-                        large(f"{misread} <b>The document rule still sent it to a person:</b> "
-                              f"a {o['document_read']} means they disagree with the bill.", highlight=True)
-                    elif o["status"] == "Needs a person":
-                        large(f"{misread} <b>A rule still sent it to a person.</b>", highlight=True)
-                    else:
-                        st.error("The model misread this, and no rule caught it.")
                 for action in o["actions"]:
                     if verify_action(after, o["id"], action):
                         st.caption(f"✓ Done: {describe(action)}")
                     else:
                         st.caption(f"✗ Not found in the AR system: {describe(action)}")
 
-# Right: the AR system itself.
-with system_side:
-    st.markdown("**The AR system after this run**")
+# Tab 2: the AR system itself.
+with system_tab:
     rows = [
         "| Invoice | Reminders | Promise to pay | Document requested |",
         "|---|---|---|---|",
@@ -232,45 +195,61 @@ with system_side:
     drafts = ", ".join(f"{e['to']}: {e['subject']}" for e in after["outbox"])
     st.markdown(f"**Outbox ({len(after['outbox'])} draft, not sent):** {drafts}")
 
-    # The model evaluation: 30 harder labelled emails, 5 runs per model (eval_cases.py).
+# Tab 3: the rules catch some model mistakes, not all, so the reading model matters.
+with model_tab:
+    # A mistake the rules caught: the cheaper model's run where it misread Delta.
+    delta = None
+    for o in load_run(CHEAPER):
+        if o["id"] == "R4":
+            delta = o
+    if delta["read_as"] != expected["R4"]["intent"] and delta["status"] == "Needs a person":
+        large(f"<b>The rules catch some model mistakes.</b> In one run, the cheaper model read "
+              f"{delta['from']}'s dispute as “{INTENT_WORDS[delta['read_as']]}” "
+              f"(a {delta['document_read']}). The document rule still sent it to a person: "
+              f"a {delta['document_read']} means they disagree with the bill.")
+
+    # A mistake no rule can catch: the evaluation on 30 harder emails, 5 runs per model.
     # Every number here comes from eval/results.json.
     evaluation = json.loads(EVAL_RESULTS_PATH.read_text())
-    cheap_eval = evaluation["summary"]["claude-haiku-4-5"]
-    mid_eval = evaluation["summary"]["claude-sonnet-5-5"]
+    cheap_eval = evaluation["summary"][CHEAPER]
+    mid_eval = evaluation["summary"][MID_TIER]
     cases = {c["id"]: c for c in json.loads(EVAL_CASES_PATH.read_text())}
 
-    # The example: how each model's 5 runs went on one disguised dispute.
     example = cases[EVAL_EXAMPLE]
     cheap_example_misses = 0
     mid_example_misses = 0
     for r in evaluation["all_results"]:
         if r["id"] == EVAL_EXAMPLE and r["status"] != example["expected"]:
-            if r["model"] == "claude-haiku-4-5":
+            if r["model"] == CHEAPER:
                 cheap_example_misses += 1
             else:
                 mid_example_misses += 1
 
     extra_cost = (mid_eval["cost_per_reply"] - cheap_eval["cost_per_reply"]) * 10_000
 
+    large(f"<b>Not all.</b> “{html.escape(example['email'])}”")
+    large(f"✗ <b>Cheaper model</b>, {cheap_example_misses} of 5 runs: read a promise to pay, "
+          f"missed the dispute → handled as routine")
+    large(f"✓ <b>Mid-tier model</b>, {5 - mid_example_misses} of 5 runs: caught the dispute "
+          f"→ sent to a person")
+
     with st.container(border=True):
-        large(f"<b>Model evaluation</b> · {len(cases)} harder test emails, 5 runs each")
+        large(f"<b>Evaluation</b> · {len(cases)} harder test emails with an answer key, 5 runs each")
         cheap_col, mid_col = st.columns(2)
         with cheap_col:
             st.metric("Cheaper model", f"{cheap_eval['correct_outcome'] / cheap_eval['readings']:.0%}",
-                      f"{cheap_eval['correct_outcome']} of {cheap_eval['readings']} correct", delta_color="off", delta_arrow="off")
+                      f"{cheap_eval['correct_outcome']} of {cheap_eval['readings']} correct",
+                      delta_color="off", delta_arrow="off")
             st.progress(cheap_eval["correct_outcome"] / cheap_eval["readings"])
         with mid_col:
             st.metric("Mid-tier model", f"{mid_eval['correct_outcome'] / mid_eval['readings']:.0%}",
-                      f"{mid_eval['correct_outcome']} of {mid_eval['readings']} correct", delta_color="off", delta_arrow="off")
+                      f"{mid_eval['correct_outcome']} of {mid_eval['readings']} correct",
+                      delta_color="off", delta_arrow="off")
             st.progress(mid_eval["correct_outcome"] / mid_eval["readings"])
-
-        large(f"<b>Example:</b> \u201c{html.escape(example['email'])}\u201d")
-        large(f"\u2717 <b>Cheaper model</b>, {cheap_example_misses} of 5 runs: read a promise to pay, "
-              f"missed the dispute \u2192 handled as routine")
-        large(f"\u2713 <b>Mid-tier model</b>, {5 - mid_example_misses} of 5 runs: caught the dispute "
-              f"\u2192 sent to a person")
+        large(f"<b>So the mid-tier model reads the replies:</b> about &#36;{extra_cost:,.0f} more per "
+              f"10,000 emails, less than one missed dispute costs.", highlight=True)
         st.caption(
             f"Missed escalations: {cheap_eval['false_handled']} vs {mid_eval['false_handled']} of "
-            f"{cheap_eval['readings']} test runs, concentrated in disguised disputes · "
-            f"mid-tier about \\${extra_cost:,.0f} more per 10,000 emails"
+            f"{cheap_eval['readings']} test runs, concentrated in disguised disputes. "
+            f"Cost per reply: \\${cost_per_reply(CHEAPER):.4f} cheaper, \\${cost_per_reply(MID_TIER):.4f} mid-tier."
         )

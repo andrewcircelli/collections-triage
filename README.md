@@ -191,27 +191,37 @@ python triage.py            # plain code: decides, acts in the AR system, then v
 streamlit run app.py        # opens the screen
 ```
 
-The screen shows cheaper-model run 3 (the one with the slip) and mid-tier run 1; `SHOWN_RUN` in
-`app.py` says which. `read.py` on its own reads the emails once per model and writes
+The screen shows mid-tier run 1 on its first two tabs and cheaper-model run 3 (the one with the
+slip) on the third. `read.py` on its own reads the emails once per model and writes
 `runs/readings-<model>.json` directly.
 
 For a demo, only `streamlit run app.py` is needed: it reads the saved runs and makes no model calls.
 
 ## The screen
 
-One screen. Across the top, the business results for the run shown: 50% of replies handled without
-a collector (2 of 4), 4 of 4 customer replies processed (every action confirmed in the AR system),
-2 exceptions routed for review with the reason, and $8,400 of the $21,050 overdue in receivables
-actioned (invoices with a handled reply, not cash collected). These come from 4 made-up replies, so
-they show how it works, not a forecast; the screen says so. Below that, on the left, each
-customer's email beside its outcome, the reason, and the actions done, each with a ✓ checked
-against the AR system. Cedar's caught wrong invoice comes first. Where the
-model misread an email, the row says so. On the right, the AR system after the run: what changed is
-in bold, the old value struck through, plus the collector's queue and the outbox. A switch at the
-top shows the cheaper or the mid-tier model's run. Under the AR system, the model evaluation:
-each model's score on the 30 harder emails (90% against 100%), one disguised dispute both models
-read (the cheaper one missed it on all 5 runs), and the cost difference. Its numbers come from
-`eval/results.json`.
+One screen, framed as a change to one step of collections. At the top, before and after in two
+lines: today a collector reads every reply and updates the AR system by hand; with this, routine
+replies are done and checked automatically and the collector reads only the exceptions.
+
+Under that, three results for the mid-tier model's run, the model the evaluation chose:
+
+- **Efficiency:** 2 of 4 replies closed without a collector; $8,400 of the $21,050 overdue actioned
+  (invoices with a handled reply, not cash collected).
+- **Effectiveness:** 2 of 2 exceptions reached a person, each with the reason (scored against
+  `expected.json`).
+- **Proof:** 5 of 5 actions confirmed in the AR system, read back from the saved records.
+
+These come from 4 made-up replies, so they show how it works, not a forecast; the screen says so.
+Then three tabs, one per point in the conversation:
+
+1. **The replies:** each customer's email beside its outcome, the reason, and the actions done,
+   each with a ✓ checked against the AR system. Cedar's caught wrong invoice comes first.
+2. **The AR system, before and after:** what changed is in bold, the old value struck through,
+   plus the collector's queue and the outbox.
+3. **Which model to trust:** the rules catch some model mistakes (the cheaper model's Delta misread,
+   from its run 3) but not all (a disguised dispute from the evaluation, which the cheaper model
+   missed on all 5 runs). Then each model's score on the 30 harder emails (90% against 100%) and
+   the cost difference. Its numbers come from `eval/results.json`.
 
 ## Notes
 
